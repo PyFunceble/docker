@@ -91,6 +91,9 @@ class Publish(Base):
         self.auth_config["username"] = os.environ["OUR_DOCKER_USERNAME"]
         self.auth_config["passowrd"] = os.environ["OUR_DOCKER_PASSWORD"]
 
+        docker_api_client.login(
+            self.auth_config["username"], password=self.auth_config["password"]
+        )
         our_filter = {"reference": "pyfunceble"}
 
         images = docker_api_client.images(
@@ -114,10 +117,7 @@ class Publish(Base):
             repository_to_publish_into = self.build_method_args["tag"].split(":")[0]
 
             publisher = docker_api_client.push(
-                repository_to_publish_into,
-                stream=True,
-                decode=True,
-                auth_config=self.auth_config,
+                repository_to_publish_into, stream=True, decode=True,
             )
 
             for response in publisher:
