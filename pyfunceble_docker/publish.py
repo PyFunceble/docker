@@ -75,12 +75,28 @@ class Publish(Base):
 
     auth_config: dict = {"username": "", "password": "", "email": ""}
 
+    def are_we_authorized_to_push(self, images: dict) -> bool:
+        """
+        Checks if we are authorized to push.
+        """
+
+        if "RepoTags" not in images or not images["RepoTags"]:
+            return False
+
+        for repo_tag in images["RepoTags"]:
+            tag = repo_tag.split(":")[-1]
+
+            if tag == "latest":
+                continue
+
+            if self.is_already_pushed(tag):
+                return False
+        return True
+
     def it(self) -> None:  # pylint: disable=invalid-name
         """
         Publish the image
         """
-
-        logging.info("Started to publish.")
 
         if "OUR_DOCKER_USERNAME" not in os.environ:
             raise Exception("OUR_DOCKER_USERNAME not found.")
@@ -106,8 +122,7 @@ class Publish(Base):
 
         our_filter = {"reference": "pyfunceble"}
 
-        images_name = f"{self.image_namespace}/{self.pkg_name.lower()}"
-        images = docker_api_client.images(images_name, filters=our_filter)
+        images = docker_api_client.images(self.docker_repository, filters=our_filter)
         tag_to_look_for = self.build_method_args["tag"].split("/")[-1]
 
         image_to_publish = []
@@ -138,16 +153,22 @@ class Publish(Base):
         if not image_to_publish:
             raise Exception("Image to publish not found!")
 
+        logging.info("Started to publish.")
+
         for image in image_to_publish:
-            for repository in image["RepoTags"]:
-                repository = f"{REGISTRY_URL}/{repository}"
+            if self.are_we_authorized_to_push(image):
+                for repository in image["RepoTags"]:
+                    repository = f"{REGISTRY_URL}/{repository}"
 
-                logging.info("Publishing %s", repository)
-                publisher = docker_api_client.push(
-                    repository, stream=True, decode=True, auth_config=self.auth_config,
-                )
+                    logging.info("Publishing %s", repository)
+                    publisher = docker_api_client.push(
+                        repository,
+                        stream=True,
+                        decode=True,
+                        auth_config=self.auth_config,
+                    )
 
-                for response in publisher:
-                    self.log_response(response)
+                    for response in publisher:
+                        self.log_response(response)
 
         logging.info("Finished to publish.")

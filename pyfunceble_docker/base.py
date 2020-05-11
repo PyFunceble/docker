@@ -65,6 +65,8 @@ import logging
 import os
 from typing import Optional
 
+import requests
+
 from .config.client import REGISTRY_URL
 
 
@@ -75,7 +77,8 @@ class Base:
 
     # pylint: disable=too-many-arguments
 
-    image_namespace = "pyfunceble"
+    image_namespace: str = "pyfunceble"
+    docker_repository: str = ""
 
     version: str = ""
     pkg_name: str = "PyFunceble"
@@ -127,6 +130,7 @@ class Base:
             self.python_version = python_version
 
         self.is_latest = is_latest
+        self.docker_repository = f"{self.image_namespace}/{self.pkg_name.lower()}"
 
         self.build_args.update(self.get_build_args())
 
@@ -134,7 +138,7 @@ class Base:
         self.build_method_args["path"] = build_dir
         self.build_method_args[
             "tag"
-        ] = f"{REGISTRY_URL}/{self.image_namespace}/{self.pkg_name.lower()}:{self.version.lower()}"
+        ] = f"{REGISTRY_URL}/{self.docker_repository}:{self.version.lower()}"
 
         logging.debug("VERSION: %s", self.version)
         logging.debug("PKG Name: %s", self.pkg_name)
@@ -191,3 +195,29 @@ class Base:
             logging.info(response["errorDetail"]["message"])
         elif "status" in response:
             logging.info("%s", response["status"])
+
+    def is_already_pushed(self, tag: str):
+        """
+        Checks if the given tag was already pushed.
+        """
+
+        url = f"https://registry.hub.docker.com/v2/repositories/{self.docker_repository}/tags/"
+
+        tag_published = False
+
+        while True:
+            req = requests.get(url)
+            req.raise_for_status()
+
+            data = req.json()
+
+            tag_published = any([x["name"] == tag for x in data["results"]])
+
+            if not tag_published and "next" in data and data["next"]:
+                url = data["next"]
+            else:
+                break
+
+        logging.debug("Tag published: %s", tag_published)
+
+        return tag_published
