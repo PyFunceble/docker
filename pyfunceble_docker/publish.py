@@ -73,7 +73,7 @@ class Publish(Base):
     The publisher. Publish our image.
     """
 
-    auth_config: dict = {"username": "", "password": ""}
+    auth_config: dict = {"username": "", "password": "", "email": ""}
 
     def it(self) -> None:  # pylint: disable=invalid-name
         """
@@ -88,36 +88,63 @@ class Publish(Base):
         if "OUR_DOCKER_PASSWORD" not in os.environ:
             raise Exception("OUR_DOCKER_PASSWORD not found.")
 
+        if "OUR_DOCKER_EMAIL" not in os.environ:
+            raise Exception("OUR_DOCKER_EMAIL not found.")
+
         self.auth_config["username"] = os.environ["OUR_DOCKER_USERNAME"]
         self.auth_config["passowrd"] = os.environ["OUR_DOCKER_PASSWORD"]
+        self.auth_config["email"] = os.environ["OUR_DOCKER_EMAIL"]
 
-        docker_api_client.login(
-            self.auth_config["username"], password=self.auth_config["password"]
-        )
         our_filter = {"reference": "pyfunceble"}
 
-        images = docker_api_client.images(
-            f"{self.image_namespace}/{self.pkg_name.lower()}", filters=our_filter
-        )
+        images_name = f"{self.image_namespace}/{self.pkg_name.lower()}"
+        images = docker_api_client.images(images_name, filters=our_filter)
         tag_to_look_for = self.build_method_args["tag"].split("/")[-1]
 
         image_to_publish = []
 
+        logging.debug("Images (found):\n%s", images)
+
         for image in images:
+            logging.debug("Checking:\n%s", image)
             if "RepoTags" not in image:
+                logging.debug("No repo tags found, continue.")
                 continue
 
             if any([tag_to_look_for in x for x in image["RepoTags"]]):
+                logging.debug(
+                    "Tag to look for (%s) found in repo tags (%s).",
+                    tag_to_look_for,
+                    image["RepoTags"],
+                )
                 image_to_publish.append(image.copy())
+                continue
+
+            logging.debug(
+                "Tag to look for (%s) not found in repo tags (%s).",
+                tag_to_look_for,
+                image["RepoTags"],
+            )
 
         if not image_to_publish:
             raise Exception("Image to publish not found!")
 
-        for image in image_to_publish:
-            repository_to_publish_into = self.build_method_args["tag"].split(":")[0]
+        login = docker_api_client.login(
+            self.auth_config["username"], password=self.auth_config["password"]
+        )
 
+        logging.info("Loging status: %s", login)
+
+        repository_to_publish_into = self.build_method_args["tag"].split(":")[0]
+
+        logging.debug("Repository to publish into: %s", repository_to_publish_into)
+
+        for image in image_to_publish:
             publisher = docker_api_client.push(
-                repository_to_publish_into, stream=True, decode=True,
+                repository_to_publish_into,
+                stream=True,
+                decode=True,
+                auth_config=self.auth_config,
             )
 
             for response in publisher:
