@@ -95,6 +95,14 @@ class Publish(Base):
         self.auth_config["passowrd"] = os.environ["OUR_DOCKER_PASSWORD"]
         self.auth_config["email"] = os.environ["OUR_DOCKER_EMAIL"]
 
+        login = docker_api_client.login(
+            self.auth_config["username"],
+            password=self.auth_config["password"],
+            registry="https://index.docker.io/v1/",
+            reauth=True,
+        )
+        logging.info("Loging status: %s", login)
+
         our_filter = {"reference": "pyfunceble"}
 
         images_name = f"{self.image_namespace}/{self.pkg_name.lower()}"
@@ -129,25 +137,15 @@ class Publish(Base):
         if not image_to_publish:
             raise Exception("Image to publish not found!")
 
-        login = docker_api_client.login(
-            self.auth_config["username"], password=self.auth_config["password"]
-        )
-
-        logging.info("Loging status: %s", login)
-
-        repository_to_publish_into = self.build_method_args["tag"].split(":")[0]
-
-        logging.debug("Repository to publish into: %s", repository_to_publish_into)
-
         for image in image_to_publish:
-            publisher = docker_api_client.push(
-                repository_to_publish_into,
-                stream=True,
-                decode=True,
-                auth_config=self.auth_config,
-            )
+            for repository in image["RepoTags"]:
+                logging.info("Publishing %s", repository)
 
-            for response in publisher:
-                self.log_response(response)
+                publisher = docker_api_client.push(
+                    repository, stream=True, decode=True, auth_config=self.auth_config,
+                )
+
+                for response in publisher:
+                    self.log_response(response)
 
         logging.info("Finished to publish.")
