@@ -83,11 +83,14 @@ class Base:
     version: str = ""
     pkg_name: str = "PyFunceble"
     python_version: str = "latest"
+    branch: str = "master"
+    package_archive: str = "https://github.com/funilrys/PyFunceble/archive/%s.zip"
 
     python2docker_arg = {
         "version": "PYFUNCEBLE_VERSION",
         "pkg_name": "PYFUNCEBLE_PKG_NAME",
         "python_version": "PYTHON_VERSION",
+        "package_archive": "PACKAGE_ARCHIVE_URL",
     }
 
     is_latest: bool = False
@@ -112,6 +115,7 @@ class Base:
         pkg_name: Optional[str] = None,
         python_version: Optional[str] = None,
         is_latest: bool = False,
+        commit: Optional[str] = None,
     ) -> None:
 
         try:
@@ -128,6 +132,14 @@ class Base:
 
         if python_version:
             self.python_version = python_version
+
+        if self.pkg_name.lower().endswith("dev"):
+            self.branch = "dev"
+        else:
+            self.branch = "master"
+
+        if commit:
+            self.package_archive = self.package_archive % commit
 
         self.is_latest = is_latest
         self.docker_repository = f"{self.image_namespace}/{self.pkg_name.lower()}"
@@ -192,7 +204,7 @@ class Base:
             else:
                 logging.info("%s", response["status"])
         elif "errorDetail" in response and response["errorDetail"]:
-            logging.info(response["errorDetail"]["message"])
+            raise Exception(response["errorDetail"]["message"])
         elif "status" in response:
             logging.info("%s", response["status"])
 

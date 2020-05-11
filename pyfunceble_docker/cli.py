@@ -133,6 +133,10 @@ def builder():
             default=False,
         )
 
+        parser.add_argument(
+            "-c", "--commit", help="Sets the commit to use as package.", type=str
+        )
+
         args = parser.parse_args()
 
         if args.debug:
@@ -153,6 +157,7 @@ def builder():
             pkg_name=args.pkg_name,
             python_version=args.python_version,
             is_latest=args.is_latest,
+            commit=args.commit,
         ).it()
 
         if args.publish:
@@ -162,6 +167,7 @@ def builder():
                 pkg_name=args.pkg_name,
                 python_version=args.python_version,
                 is_latest=args.is_latest,
+                commit=args.commit,
             ).it()
 
 
