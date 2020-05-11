@@ -65,6 +65,8 @@ import logging
 import os
 from typing import Optional
 
+from .config.client import REGISTRY_URL
+
 
 class Base:
     """
@@ -132,7 +134,7 @@ class Base:
         self.build_method_args["path"] = build_dir
         self.build_method_args[
             "tag"
-        ] = f"{self.image_namespace}/{self.pkg_name.lower()}:{self.version.lower()}"
+        ] = f"{REGISTRY_URL}/{self.image_namespace}/{self.pkg_name.lower()}:{self.version.lower()}"
 
         logging.debug("VERSION: %s", self.version)
         logging.debug("PKG Name: %s", self.pkg_name)

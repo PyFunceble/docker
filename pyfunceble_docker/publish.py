@@ -65,7 +65,7 @@ import logging
 import os
 
 from .base import Base
-from .config.client import docker_api_client
+from .config.client import REGISTRY_URL, docker_api_client
 
 
 class Publish(Base):
@@ -92,13 +92,14 @@ class Publish(Base):
             raise Exception("OUR_DOCKER_EMAIL not found.")
 
         self.auth_config["username"] = os.environ["OUR_DOCKER_USERNAME"]
-        self.auth_config["passowrd"] = os.environ["OUR_DOCKER_PASSWORD"]
+        self.auth_config["password"] = os.environ["OUR_DOCKER_PASSWORD"]
         self.auth_config["email"] = os.environ["OUR_DOCKER_EMAIL"]
 
         login = docker_api_client.login(
             self.auth_config["username"],
             password=self.auth_config["password"],
-            registry="https://index.docker.io/v1/",
+            email=self.auth_config["email"],
+            registry=REGISTRY_URL,
             reauth=True,
         )
         logging.info("Loging status: %s", login)
@@ -139,8 +140,9 @@ class Publish(Base):
 
         for image in image_to_publish:
             for repository in image["RepoTags"]:
-                logging.info("Publishing %s", repository)
+                repository = f"{REGISTRY_URL}/{repository}"
 
+                logging.info("Publishing %s", repository)
                 publisher = docker_api_client.push(
                     repository, stream=True, decode=True, auth_config=self.auth_config,
                 )
