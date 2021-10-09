@@ -11,15 +11,14 @@ ENV PYFUNCEBLE_PKG_NAME=${PYFUNCEBLE_PKG_NAME}
 ENV PACKAGE_ARCHIVE_URL=${PACKAGE_ARCHIVE_URL}
 
 RUN apt-get update  && \
-    apt-get -y --no-install-recommends install ca-certificates curl
-
-RUN apt-get install gosu
+    apt-get -y --no-install-recommends install ca-certificates curl && \
+    apt-get install gosu
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY pyfunceble.sh /usr/local/bin/pyfunceble.sh
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/pyfunceble.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/pyfunceble.sh
 
 RUN pip3 install ${PACKAGE_ARCHIVE_URL}
 

@@ -27,6 +27,9 @@ export PYFUNCEBLE_CONFIG_DIR="${PYFUNCEBLE_CONFIG_DIR}"
 if [[ "${1:0:1}" == "/" ]]
 then
     exec gosu pyfunceble ${@}
+elif [[ $(command -v ${1%% *} 2>/dev/null) ]]
+then
+    exec gosu pyfunceble ${@}
 else
     exec gosu pyfunceble /usr/local/bin/pyfunceble.sh ${@}
 fi
