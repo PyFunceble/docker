@@ -39,8 +39,8 @@ License:
 
     MIT License
 
-    Copyright (c) 2019, 2020 PyFunceble
-    Copyright (c) 2017, 2018, 2019, 2020 Nissar Chababy
+    Copyright (c) 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 Nissar Chababy
+    Copyright (c) 2019, 2020, 2021, 2022, 2023, 2024 PyFunceble Contributors
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -61,4 +61,4 @@ License:
     SOFTWARE.
 """
 
-VERSION = "1.6.0"
+VERSION = "1.6.1"
