@@ -106,7 +106,12 @@ class Publish(Base):
         logging.info("Loging status: %s", login)
 
         our_filter = {"reference": "pyfunceble"}
-        image_name = self.build_method_args["tag"].split(":")[0]
+
+        if "docker.io" in self.build_method_args["tag"]:
+            image_name = self.build_method_args["tag"].split("/")[1].split(":")[0]
+        else:
+            image_name = self.build_method_args["tag"].split(":")[0]
+
 
         images = docker_api_client.images(image_name, filters=our_filter)
 
