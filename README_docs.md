@@ -37,11 +37,9 @@ With the latest version:
 docker run -it -p 8080:80 pyfunceble/docs
 ```
 
-With the latest version and data persistence:
+### How to access it ?
 
-```shell
-docker run -it -v ${PWD}/inside:/home/pyfunceble pyfunceble/pyfunceble-dev [PyFunceble parameters]
-```
+Open your favorite web browser and visit `http://localhost:8080` (assuming you are running the container on your local machine and with the command above).
 
 ## License
 
