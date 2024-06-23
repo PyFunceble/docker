@@ -62,18 +62,15 @@ License:
 """
 
 import logging
-import os
 
 from .base import Base
-from .config.client import REGISTRY_URL, docker_api_client
+from .config.client import docker_api_client
 
 
 class Publish(Base):
     """
     The publisher. Publish our image.
     """
-
-    auth_config: dict = {"username": "", "password": "", "email": ""}
 
     def are_we_authorized_to_push(self, images: dict) -> bool:
         """
@@ -98,26 +95,14 @@ class Publish(Base):
         Publish the image
         """
 
-        if "OUR_DOCKER_USERNAME" not in os.environ:
-            raise Exception("OUR_DOCKER_USERNAME not found.")
-
-        if "OUR_DOCKER_PASSWORD" not in os.environ:
-            raise Exception("OUR_DOCKER_PASSWORD not found.")
-
-        if "OUR_DOCKER_EMAIL" not in os.environ:
-            raise Exception("OUR_DOCKER_EMAIL not found.")
-
-        self.auth_config["username"] = os.environ["OUR_DOCKER_USERNAME"]
-        self.auth_config["password"] = os.environ["OUR_DOCKER_PASSWORD"]
-        self.auth_config["email"] = os.environ["OUR_DOCKER_EMAIL"]
-
         login = docker_api_client.login(
             self.auth_config["username"],
-            password=self.auth_config["password"],
+            password=self.auth_config["token"],
             email=self.auth_config["email"],
-            registry=REGISTRY_URL,
+            registry=self.registry,
             reauth=True,
         )
+
         logging.info("Loging status: %s", login)
 
         our_filter = {"reference": "pyfunceble"}
@@ -135,7 +120,9 @@ class Publish(Base):
                 logging.debug("No repo tags found, continue.")
                 continue
 
-            if any([tag_to_look_for in x for x in image["RepoTags"]]):
+            if any(
+                [tag_to_look_for in x and self.registry in x for x in image["RepoTags"]]
+            ):
                 logging.debug(
                     "Tag to look for (%s) found in repo tags (%s).",
                     tag_to_look_for,
@@ -158,14 +145,14 @@ class Publish(Base):
         for image in image_to_publish:
             if self.are_we_authorized_to_push(image):
                 for repository in image["RepoTags"]:
-                    repository = f"{REGISTRY_URL}/{repository}"
+                    if self.registry not in repository:
+                        repository = f"{self.registry}/{repository}"
 
                     logging.info("Publishing %s", repository)
                     publisher = docker_api_client.push(
                         repository,
                         stream=True,
                         decode=True,
-                        auth_config=self.auth_config,
                     )
 
                     for response in publisher:

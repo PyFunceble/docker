@@ -109,6 +109,14 @@ def add_common_commands(parser):
         "--python-version", help="Sets the Python version to install.", type=str
     )
 
+    parser.add_argument(
+        "-r",
+        "--registry",
+        help="Sets the registry URL.",
+        type=str,
+        default="docker.io",
+    )
+
     return parser
 
 
@@ -163,6 +171,7 @@ def builder():
             python_version=args.python_version,
             is_latest=args.is_latest,
             commit=args.commit,
+            registry=args.registry,
         ).it()
 
         if args.publish:
@@ -173,6 +182,7 @@ def builder():
                 python_version=args.python_version,
                 is_latest=args.is_latest,
                 commit=args.commit,
+                registry=args.registry,
             ).it()
 
 

@@ -67,8 +67,6 @@ from typing import Optional
 
 import requests
 
-from .config.client import REGISTRY_URL
-
 
 class Base:
     """
@@ -109,6 +107,10 @@ class Base:
         "tag": f"{image_namespace}/",
     }
 
+    registry = "docker.io"
+
+    auth_config: dict = {"username": "", "token": "", "email": ""}
+
     def __init__(
         self,
         build_dir: str,
@@ -117,6 +119,7 @@ class Base:
         python_version: Optional[str] = None,
         is_latest: bool = False,
         commit: Optional[str] = None,
+        registry: Optional[str] = None,
     ) -> None:
 
         try:
@@ -142,6 +145,27 @@ class Base:
         if commit:
             self.package_archive = self.package_archive % commit
 
+        if registry:
+            self.registry = registry
+
+        if "OUR_DOCKER_REGISTRY" in os.environ:
+            self.registry = os.environ["OUR_DOCKER_REGISTRY"]
+
+        if "OUR_DOCKER_USERNAME" not in os.environ:
+            raise Exception("OUR_DOCKER_USERNAME not found.")
+
+        if "OUR_DOCKER_PASSWORD" not in os.environ:
+            raise Exception("OUR_DOCKER_PASSWORD not found.")
+
+        if "docker.io" in self.registry:
+            if "OUR_DOCKER_EMAIL" not in os.environ:
+                raise Exception("OUR_DOCKER_EMAIL not found.")
+
+            self.auth_config["email"] = os.environ["OUR_DOCKER_EMAIL"]
+
+        self.auth_config["username"] = os.environ["OUR_DOCKER_USERNAME"]
+        self.auth_config["token"] = os.environ["OUR_DOCKER_PASSWORD"]
+
         self.is_latest = is_latest
         self.docker_repository = f"{self.image_namespace}/{self.pkg_name.lower()}"
 
@@ -150,7 +174,7 @@ class Base:
         self.build_method_args["buildargs"] = self.build_args
         self.build_method_args["path"] = build_dir
         self.build_method_args["tag"] = (
-            f"{REGISTRY_URL}/{self.docker_repository}:{self.version.lower()}"
+            f"{self.registry}/{self.docker_repository}:{self.version.lower()}"
         )
 
         logging.debug("VERSION: %s", self.version)
@@ -214,22 +238,47 @@ class Base:
         Checks if the given tag was already pushed.
         """
 
-        url = f"https://registry.hub.docker.com/v2/repositories/{self.docker_repository}/tags/"
+        headers = {}
+        params = {}
+
+        if "docker.io" in self.registry:
+            url = f"https://registry.hub.docker.com/v2/repositories/{self.docker_repository}/tags/"
+        else:
+            package_owner = self.docker_repository.split("/")[0]
+            headers = {"Authorization": f"token {self.auth_config['token']}"}
+            params = {"limit": 100, "page": 1}
+
+            url = f"https://{self.registry}/api/v1/packages/{package_owner}"
 
         tag_published = False
 
         while True:
-            req = requests.get(url)
+            req = requests.get(url, headers=headers, params=params)
             req.raise_for_status()
 
             data = req.json()
 
-            tag_published = any([x["name"] == tag for x in data["results"]])
+            if "docker.io" in self.registry:
+                tag_published = any([x["name"] == tag for x in data["results"]])
 
-            if not tag_published and "next" in data and data["next"]:
-                url = data["next"]
+                if not tag_published and "next" in data and data["next"]:
+                    url = data["next"]
+                else:
+                    break
             else:
-                break
+                tags_published = any(
+                    [x["version"] == tag for x in data if x["type"] == "container"]
+                )
+
+                if data:
+                    if not tags_published:
+                        params["page"] += 1
+                        continue
+
+                    break
+
+                if not data:
+                    break
 
         logging.debug("Tag published: %s", tag_published)
 
