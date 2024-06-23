@@ -93,11 +93,16 @@ def add_common_commands(parser):
     parser.add_argument("-b", "--build-dir", type=str, help="Sets the build directory.")
 
     parser.add_argument(
-        "--pyfunceble-version", help="Sets the PyFunceble version to build.", type=str,
+        "--pyfunceble-version",
+        help="Sets the PyFunceble version to build.",
+        type=str,
     )
 
     parser.add_argument(
-        "-p", "--pkg-name", help="Sets the name of the package to install.", type=str,
+        "-p",
+        "--pkg-name",
+        help="Sets the name of the package to install.",
+        type=str,
     )
 
     parser.add_argument(

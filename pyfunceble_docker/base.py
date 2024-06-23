@@ -91,7 +91,7 @@ class Base:
         "pkg_name": "PYFUNCEBLE_PKG_NAME",
         "python_version": "PYTHON_VERSION",
         "package_archive": "PACKAGE_ARCHIVE_URL",
-        "commit": "COMMIT_ID"
+        "commit": "COMMIT_ID",
     }
 
     is_latest: bool = False
@@ -149,9 +149,9 @@ class Base:
 
         self.build_method_args["buildargs"] = self.build_args
         self.build_method_args["path"] = build_dir
-        self.build_method_args[
-            "tag"
-        ] = f"{REGISTRY_URL}/{self.docker_repository}:{self.version.lower()}"
+        self.build_method_args["tag"] = (
+            f"{REGISTRY_URL}/{self.docker_repository}:{self.version.lower()}"
+        )
 
         logging.debug("VERSION: %s", self.version)
         logging.debug("PKG Name: %s", self.pkg_name)
