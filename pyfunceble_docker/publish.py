@@ -108,7 +108,11 @@ class Publish(Base):
         our_filter = {"reference": "pyfunceble"}
 
         images = docker_api_client.images(self.docker_repository, filters=our_filter)
-        tag_to_look_for = self.build_method_args["tag"].split("/")[-1]
+
+        if "docker.io" in self.registry:
+            tag_to_look_for = "/".join(self.build_method_args["tag"].split("/")[1:])
+        else:
+            tag_to_look_for = self.build_method_args["tag"]
 
         image_to_publish = []
 
@@ -120,15 +124,9 @@ class Publish(Base):
                 logging.debug("No repo tags found, continue.")
                 continue
 
-            if "docker.io" in self.registry:
-                image_checker = [tag_to_look_for in x in x for x in image["RepoTags"]]
-            else:
-                image_checker = [
-                    tag_to_look_for in x and self.registry in x
-                    for x in image["RepoTags"]
-                ]
-
-            if any(image_checker):
+            if any(
+                [tag_to_look_for in x and self.registry in x for x in image["RepoTags"]]
+            ):
                 logging.debug(
                     "Tag to look for (%s) found in repo tags (%s).",
                     tag_to_look_for,
