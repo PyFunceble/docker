@@ -88,7 +88,7 @@ class Build(Base):
                 self.build_method_args["tag"],
                 self.build_method_args["tag"].split(":")[0],
                 tag="latest",
-                force=True
+                force=True,
             )
 
         logging.info("Finished to build.")

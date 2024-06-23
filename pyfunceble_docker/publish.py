@@ -108,10 +108,11 @@ class Publish(Base):
         our_filter = {"reference": "pyfunceble"}
 
         if "docker.io" in self.build_method_args["tag"]:
-            image_name = self.build_method_args["tag"][self.build_method_args["tag"].find("/") +1:].split(":")[0]
+            image_name = self.build_method_args["tag"][
+                self.build_method_args["tag"].find("/") + 1 :
+            ].split(":")[0]
         else:
             image_name = self.build_method_args["tag"].split(":")[0]
-
 
         images = docker_api_client.images(image_name, filters=our_filter)
 
