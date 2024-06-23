@@ -9,7 +9,7 @@ ENV PYFUNCEBLE_REPO=${PYFUNCEBLE_REPO}
 ENV COMMIT_ID=${COMMIT_ID}
 
 RUN apt update  && \
-    apt -y --no-install-recommends install curl unzip git
+    apt -y --no-install-recommends install git
 
 RUN mkdir -p /pyfunceble && \
     pip install --upgrade pip && \
@@ -18,7 +18,7 @@ RUN mkdir -p /pyfunceble && \
     cd /pyfunceble && \
     pip3 install .[docs] && \
     mkdocs build && \
-    find /pyfunceble -mindepth 1 -maxdepth 1 -type d -not -name site -exec echo rm -rf '{}' \;
+    find /pyfunceble -mindepth 1 -maxdepth 1 -type d -not -name site -exec rm -rf '{}' \;
 
 FROM docker.io/nginx:stable
 
