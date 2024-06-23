@@ -103,12 +103,12 @@ class Publish(Base):
             reauth=True,
         )
 
-        logging.info("Loging status: %s", login)
+        # logging.info("Loging status: %s", login)
 
         our_filter = {"reference": "pyfunceble"}
 
         if "docker.io" in self.build_method_args["tag"]:
-            image_name = self.build_method_args["tag"].split("/")[1].split(":")[0]
+            image_name = self.build_method_args["tag"][self.build_method_args["tag"].find("/") +1:].split(":")[0]
         else:
             image_name = self.build_method_args["tag"].split(":")[0]
 
