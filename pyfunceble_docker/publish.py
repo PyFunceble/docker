@@ -124,9 +124,7 @@ class Publish(Base):
                 logging.debug("No repo tags found, continue.")
                 continue
 
-            if any(
-                [tag_to_look_for in x and self.registry in x for x in image["RepoTags"]]
-            ):
+            if any([tag_to_look_for in x for x in image["RepoTags"]]):
                 logging.debug(
                     "Tag to look for (%s) found in repo tags (%s).",
                     tag_to_look_for,
