@@ -84,13 +84,14 @@ class Base:
     pkg_name: str = "PyFunceble"
     python_version: str = "latest"
     branch: str = "master"
-    package_archive: str = "https://github.com/funilrys/PyFunceble/archive/%s.zip"
+    package_archive: str = "https://github.com/funilrys/PyFunceble/archive/%s.tar.gz"
 
     python2docker_arg = {
         "version": "PYFUNCEBLE_VERSION",
         "pkg_name": "PYFUNCEBLE_PKG_NAME",
         "python_version": "PYTHON_VERSION",
         "package_archive": "PACKAGE_ARCHIVE_URL",
+        "commit": "COMMIT_ID"
     }
 
     is_latest: bool = False
@@ -165,9 +166,9 @@ class Base:
 
         result = dict()
 
-        for local, upstram in self.python2docker_arg.items():
+        for local, upstream in self.python2docker_arg.items():
             if hasattr(self, local):
-                result[upstram] = getattr(self, local)
+                result[upstream] = getattr(self, local)
 
         return result
 
