@@ -125,7 +125,7 @@ class Publish(Base):
                 continue
 
             if any([tag_to_look_for in x for x in image["RepoTags"]]):
-                logging.debug(
+                logging.info(
                     "Tag to look for (%s) found in repo tags (%s).",
                     tag_to_look_for,
                     image["RepoTags"],
@@ -133,31 +133,44 @@ class Publish(Base):
                 image_to_publish.append(image.copy())
                 continue
 
-            logging.debug(
+            logging.info(
                 "Tag to look for (%s) not found in repo tags (%s).",
                 tag_to_look_for,
                 image["RepoTags"],
             )
 
         if not image_to_publish:
-            raise Exception("Image to publish not found!")
+            raise RuntimeError("Image to publish not found!")
 
         logging.info("Started to publish.")
 
         for image in image_to_publish:
-            if self.are_we_authorized_to_push(image):
-                for repository in image["RepoTags"]:
-                    if self.registry not in repository:
-                        repository = f"{self.registry}/{repository}"
+            if not self.are_we_authorized_to_push(image):
+                logging.info(
+                    "Skipping because we are not authorized to push. %s",
+                    image["RepoTags"],
+                )
+                continue
 
-                    logging.info("Publishing %s", repository)
-                    publisher = docker_api_client.push(
-                        repository,
-                        stream=True,
-                        decode=True,
+            for repo_tag in image["RepoTags"]:
+                if "docker.io" in self.registry and self.registry not in repo_tag:
+                    repo_tag = f"{self.registry}/{repo_tag}"
+
+                if self.registry not in repo_tag:
+                    logging.info(
+                        "Skipping %s because it does not match the registry.",
+                        repo_tag,
                     )
+                    continue
 
-                    for response in publisher:
-                        self.log_response(response)
+                logging.info("Publishing %s", repo_tag)
+                publisher = docker_api_client.push(
+                    repo_tag,
+                    stream=True,
+                    decode=True,
+                )
+
+                for response in publisher:
+                    self.log_response(response)
 
         logging.info("Finished to publish.")
