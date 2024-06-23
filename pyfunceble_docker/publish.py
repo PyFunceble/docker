@@ -120,9 +120,15 @@ class Publish(Base):
                 logging.debug("No repo tags found, continue.")
                 continue
 
-            if any(
-                [tag_to_look_for in x and self.registry in x for x in image["RepoTags"]]
-            ):
+            if "docker.io" in self.registry:
+                image_checker = [tag_to_look_for in x in x for x in image["RepoTags"]]
+            else:
+                image_checker = [
+                    tag_to_look_for in x and self.registry in x
+                    for x in image["RepoTags"]
+                ]
+
+            if any(image_checker):
                 logging.debug(
                     "Tag to look for (%s) found in repo tags (%s).",
                     tag_to_look_for,
