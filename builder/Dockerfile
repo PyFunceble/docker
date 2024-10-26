@@ -20,6 +20,6 @@ COPY pyfunceble.sh /usr/local/bin/pyfunceble.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/pyfunceble.sh
 
-RUN pip3 install ${PACKAGE_ARCHIVE_URL}
+RUN pip3 install "${PYFUNCEBLE_PKG_NAME}[all] @ ${PACKAGE_ARCHIVE_URL}"
 
 ENTRYPOINT [ "entrypoint.sh" ]
